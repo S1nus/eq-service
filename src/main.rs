@@ -45,7 +45,6 @@ async fn add_job(data: web::Data<AppState>, query: web::Query<HashMap<String, St
     let client = &data.client;
     let blob_data = client.blob_get(height, namespace, commitment).await;
 
-
     println!("Adding job");
     // Parse commitment and height from query parameters
     let commitment = match query.get("commitment").and_then(|c| hex::decode(c).ok()) {
