@@ -1,12 +1,17 @@
+#![feature(async_closure)]
 use actix_web::{App, HttpServer, web, Responder, HttpResponse};
 use actix_files as fs;
 use std::thread;
-use std::time::Duration;
 use std::sync::{Arc, Mutex};
 use std::collections::{VecDeque, HashMap};
 use serde::{Serialize, Deserialize};
-use celestia_types::{Commitment};
-use sp1_sdk::SP1ProofWithPublicValues;
+use celestia_types::{Commitment, nmt::Namespace};
+// The real SP1SDK library is here
+//use sp1_sdk::SP1ProofWithPublicValues;
+// But we will use an educational mock instead, here:
+mod zkproofs;
+use zkproofs::{generate_proof, Proof};
+
 use hex;
 use celestia_rpc::{BlobClient, Client};
 
@@ -14,7 +19,12 @@ use celestia_rpc::{BlobClient, Client};
 struct Job {
     commitment: Commitment,
     hash: Option<[u8; 32]>,
-    result: Option<SP1ProofWithPublicValues>,
+    height: u64,
+    namespace: Namespace,
+    // commented out the Option<SP1ProofWithPublicValues> 
+    //replaced it with the mock educational version
+    //result: Option<SP1ProofWithPublicValues>,
+    result: Option<Proof>,
     status: JobStatus,
 }
 
@@ -41,21 +51,31 @@ pub struct BlobInfo {
 }
 
 async fn add_job(data: web::Data<AppState>, query: web::Query<HashMap<String, String>>) -> impl Responder {
-    // Get the Client from the AppState, fetch the blob's data and namespace
-    let client = &data.client;
-    let blob_data = client.blob_get(height, namespace, commitment).await;
-
-    println!("Adding job");
-    // Parse commitment and height from query parameters
-    let commitment = match query.get("commitment").and_then(|c| hex::decode(c).ok()) {
-        Some(c) if c.len() == 32 => Commitment(c.try_into().unwrap()),
-        _ => return HttpResponse::BadRequest().json("Invalid commitment"),
-    };
-    // this is unused for now, we will eventually use it to download the blob
+    
     let height = match query.get("height").and_then(|h| h.parse::<u64>().ok()) {
         Some(h) => h,
-        None => return HttpResponse::BadRequest().json("Invalid height"),
+        None => return HttpResponse::BadRequest().json("Invalid or missing height parameter"),
     };
+    let namespace = match query.get("namespace").and_then(|ns| hex::decode(ns).ok()) {
+        Some(ns) => match Namespace::new_v0(&ns) {
+            Ok(namespace) => namespace,
+            Err(_) => return HttpResponse::BadRequest().json("Couldn't create v0 namespace from provided bytes"),
+        },
+        _ => return HttpResponse::BadRequest().json("No namespace provided"),
+    };
+    let commitment = match query.get("commitment").and_then(|c| hex::decode(c).ok()) {
+        Some(c) if c.len() == 32 => match c.try_into() {
+            Ok(arr) => Commitment(arr),
+            Err(_) => return HttpResponse::BadRequest().json("Failed to convert commitment to array"),
+        },
+        _ => return HttpResponse::BadRequest().json("Invalid commitment parameter"),
+    };
+
+    // Get the Client from the AppState, fetch the blob's data and namespace
+    //let client = &data.client;
+    //let blob_data = client.blob_get(height, namespace, commitment)
+    //    .await
+    //    .expect("Failed to get blob");
 
     // Check if we have a job for this commitment, if it exists, return the job
     let mut job_statuses = data.job_statuses.lock().unwrap();
@@ -66,6 +86,8 @@ async fn add_job(data: web::Data<AppState>, query: web::Query<HashMap<String, St
     // Otherwise, create a job and add it to the back of the queue
     let job = Job {
         commitment,
+        height,
+        namespace,
         hash: None,
         result: None,
         status: JobStatus::InQueue,
@@ -90,10 +112,10 @@ async fn get_job(data: web::Data<AppState>, query: web::Query<HashMap<String, St
     }
 }
 
-fn start_worker(app_state: web::Data<AppState>) {
+async fn start_worker(app_state: web::Data<AppState>) {
     println!("Starting worker");
     let state = app_state.clone();
-    thread::spawn(move || {
+    thread::spawn(async move || {
         loop {
             let job = {
                 let mut queue = state.job_queue.lock().unwrap();
@@ -101,9 +123,22 @@ fn start_worker(app_state: web::Data<AppState>) {
             };
             // Simulate a job being processed by sleeping, then updating the job status
             if let Some(mut job) = job {
+                let client = &app_state.client;
+                let blob_data = match client.blob_get(job.height, job.namespace, job.commitment).await {
+                    Ok(blob) => {
+                        println!("got blob {:?}", blob.commitment);
+                        blob
+                    },
+                    Err(e) => {
+                        println!("Failed to get blob: {:?}", e);
+                        continue;
+                    }
+                };
+
                 println!("Processing job: {:?}", job);
-                thread::sleep(Duration::from_secs(5));
+                let proof: Proof = generate_proof(&blob_data.data);
                 job.status = JobStatus::Completed;
+                job.result = Some(proof);
                 println!("Job completed: {:?}", job);
 
                 let mut job_statuses = state.job_statuses.lock().unwrap();
