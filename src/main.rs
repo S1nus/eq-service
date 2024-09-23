@@ -13,7 +13,6 @@ mod zkproofs;
 use zkproofs::{generate_proof, Proof};
 
 use hex;
-use celestia_rpc::{BlobClient, Client};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Job {
@@ -41,7 +40,6 @@ type CommitmentHash = [u8; 32];
 pub struct AppState {
     job_queue: Arc<Mutex<VecDeque<Job>>>,
     job_statuses: Arc<Mutex<HashMap<CommitmentHash, Job>>>,
-    client: Arc<Client>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -112,10 +110,10 @@ async fn get_job(data: web::Data<AppState>, query: web::Query<HashMap<String, St
     }
 }
 
-async fn start_worker(app_state: web::Data<AppState>) {
+fn start_worker(app_state: web::Data<AppState>) {
     println!("Starting worker");
     let state = app_state.clone();
-    thread::spawn(async move || {
+    thread::spawn(move || {
         loop {
             let job = {
                 let mut queue = state.job_queue.lock().unwrap();
@@ -123,20 +121,8 @@ async fn start_worker(app_state: web::Data<AppState>) {
             };
             // Simulate a job being processed by sleeping, then updating the job status
             if let Some(mut job) = job {
-                let client = &app_state.client;
-                let blob_data = match client.blob_get(job.height, job.namespace, job.commitment).await {
-                    Ok(blob) => {
-                        println!("got blob {:?}", blob.commitment);
-                        blob
-                    },
-                    Err(e) => {
-                        println!("Failed to get blob: {:?}", e);
-                        continue;
-                    }
-                };
-
                 println!("Processing job: {:?}", job);
-                let proof: Proof = generate_proof(&blob_data.data);
+                let proof: Proof = generate_proof();
                 job.status = JobStatus::Completed;
                 job.result = Some(proof);
                 println!("Job completed: {:?}", job);
@@ -152,16 +138,9 @@ async fn start_worker(app_state: web::Data<AppState>) {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
 
-    let node_token = std::env::var("CELESTIA_NODE_AUTH_TOKEN").expect("Token not provided");
-    let client = Client::new("ws://localhost:26658", Some(&node_token))
-        .await
-        .expect("Failed creating rpc client");
-
-
     let app_state = web::Data::new(AppState {
         job_queue: Arc::new(Mutex::new(VecDeque::new())),
         job_statuses: Arc::new(Mutex::new(HashMap::new())),
-        client: Arc::new(client),
     });
 
     start_worker(app_state.clone());
