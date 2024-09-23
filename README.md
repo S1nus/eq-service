@@ -1,5 +1,5 @@
 # Take-Home Assignment
-Part of Solutions Engineering at Celestia Labs involves on-boarding to new codebases and new tech stacks and learning how to integrate them with Celestia. This asssignment is meant to test your ability to on-board to a new codebase, in a new language and tech stack. Here you'll find a server with a web API interface that allows a user to submit jobs, and check the status of those jobs.
+Part of Solutions Engineering at Celestia Labs involves on-boarding to new codebases and tech stacks to integrate them with Celestia. This asssignment is meant to test your ability to on-board to a new codebase, in a new language and tech stack. Here you'll find a server with a web API interface that allows a user to submit jobs, and check the status of those jobs.
 
 This is a simplified, educational version of a real service we are currently developing, which computes zero-knowledge "commitment equivalence" proofs for usage in integrations with certain rollups.
 
