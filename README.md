@@ -5,7 +5,7 @@ This is a simplified, educational version of a real service we are currently dev
 
 # Your task
 As it's written, this service keeps all of its data in memory, but we need the service to persist the completed proofs to disk, in case the service crashes and to index the completed proofs.
-1. Install Rust
+1. [Install Rust](https://rustup.rs/)
 2. Clone and run this repo
     - Manually test it, to verify that it works
     - On a Mac, these curl commands should work:
