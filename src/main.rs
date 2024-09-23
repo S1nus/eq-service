@@ -69,12 +69,6 @@ async fn add_job(data: web::Data<AppState>, query: web::Query<HashMap<String, St
         _ => return HttpResponse::BadRequest().json("Invalid commitment parameter"),
     };
 
-    // Get the Client from the AppState, fetch the blob's data and namespace
-    //let client = &data.client;
-    //let blob_data = client.blob_get(height, namespace, commitment)
-    //    .await
-    //    .expect("Failed to get blob");
-
     // Check if we have a job for this commitment, if it exists, return the job
     let mut job_statuses = data.job_statuses.lock().unwrap();
     if job_statuses.contains_key(&commitment.0) {
