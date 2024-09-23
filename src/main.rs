@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 use std::collections::{VecDeque, HashMap};
 use serde::{Serialize, Deserialize};
 use celestia_types::{Commitment, nmt::Namespace};
+use tokio::signal;
 // The real SP1SDK library is here
 //use sp1_sdk::SP1ProofWithPublicValues;
 // But we will use an educational mock instead, here:
@@ -115,37 +116,36 @@ async fn get_job(data: web::Data<AppState>, query: web::Query<HashMap<String, St
 async fn start_worker(app_state: web::Data<AppState>) {
     println!("Starting worker");
     let state = app_state.clone();
-    thread::spawn(async move || {
-        loop {
-            let job = {
-                let mut queue = state.job_queue.lock().unwrap();
-                queue.pop_front()
+    loop {
+        let job = {
+            let mut queue = state.job_queue.lock().unwrap();
+            queue.pop_front()
+        };
+        // Simulate a job being processed by sleeping, then updating the job status
+        if let Some(mut job) = job {
+            let client = &app_state.client;
+            println!("fetching blob");
+            let blob_data = match client.blob_get(job.height, job.namespace, job.commitment).await {
+                Ok(blob) => {
+                    println!("got blob {:?}", blob.commitment);
+                    blob
+                },
+                Err(e) => {
+                    println!("Failed to get blob: {:?}", e);
+                    continue;
+                }
             };
-            // Simulate a job being processed by sleeping, then updating the job status
-            if let Some(mut job) = job {
-                let client = &app_state.client;
-                let blob_data = match client.blob_get(job.height, job.namespace, job.commitment).await {
-                    Ok(blob) => {
-                        println!("got blob {:?}", blob.commitment);
-                        blob
-                    },
-                    Err(e) => {
-                        println!("Failed to get blob: {:?}", e);
-                        continue;
-                    }
-                };
 
-                println!("Processing job: {:?}", job);
-                let proof: Proof = generate_proof(&blob_data.data);
-                job.status = JobStatus::Completed;
-                job.result = Some(proof);
-                println!("Job completed: {:?}", job);
+            println!("Processing job: {:?}", job);
+            let proof: Proof = generate_proof(&blob_data.data);
+            job.status = JobStatus::Completed;
+            job.result = Some(proof);
+            println!("Job completed: {:?}", job);
 
-                let mut job_statuses = state.job_statuses.lock().unwrap();
-                job_statuses.insert(job.commitment.0, job.clone());
-            }
+            let mut job_statuses = state.job_statuses.lock().unwrap();
+            job_statuses.insert(job.commitment.0, job.clone());
         }
-    });
+    }
 }
     
 
@@ -153,7 +153,7 @@ async fn start_worker(app_state: web::Data<AppState>) {
 async fn main() -> std::io::Result<()> {
 
     let node_token = std::env::var("CELESTIA_NODE_AUTH_TOKEN").expect("Token not provided");
-    let client = Client::new("ws://localhost:26658", Some(&node_token))
+    let client = Client::new(&std::env::var("CELESTIA_NODE_URL").unwrap_or("ws://localhost:26658".to_string()), Some(&node_token))
         .await
         .expect("Failed creating rpc client");
 
@@ -164,9 +164,9 @@ async fn main() -> std::io::Result<()> {
         client: Arc::new(client),
     });
 
-    start_worker(app_state.clone());
+    let worker_handle = tokio::spawn(start_worker(app_state.clone()));
 
-    HttpServer::new(move || {
+    let server_handle = HttpServer::new(move || {
         App::new()
             .app_data(app_state.clone())
             .route("/add_job", web::get().to(add_job))
@@ -174,6 +174,21 @@ async fn main() -> std::io::Result<()> {
             .service(fs::Files::new("/", "./static").index_file("index.html"))
     })
     .bind("127.0.0.1:8080")?
-    .run()
-    .await
+    .run();
+
+    let shutdown_signal = async {
+        signal::ctrl_c().await.expect("Failed to listen for Ctrl+C");
+        println!("Shutdown signal received, stopping server...");
+    };
+
+    tokio::select! {
+        _ = server_handle => println!("Server stopped."),
+        _ = shutdown_signal => {
+            println!("Stopping server gracefully...");
+            worker_handle.abort();
+            println!("Worker stopped.");
+        }
+    }
+
+    Ok(())
 }
