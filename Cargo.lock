@@ -821,9 +821,12 @@ version = "0.1.0"
 dependencies = [
  "celestia-rpc",
  "celestia-types",
+ "nmt-rs",
  "prost",
  "serde",
  "serde_json",
+ "tendermint",
+ "tendermint-proto",
  "tokio",
  "tonic",
  "tonic-build",

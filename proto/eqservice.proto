@@ -2,15 +2,15 @@ syntax = "proto3";
 package eqs;
 
 service Eq {
-    rpc SubmitJob(SubmitJobRequest) returns (SubmitJobResponse);
+    rpc GetKeccakInclusion(GetKeccakInclusionRequest) returns (GetKeccakInclusionResponse);
 }
-message SubmitJobRequest {
+message GetKeccakInclusionRequest {
     bytes commitment = 1;  // 32 byte blob commitment
     bytes namespace = 2;   // 32 byte namespace
     uint64 height = 3;     // block height
 }
 
-message SubmitJobResponse {
+message GetKeccakInclusionResponse {
     enum Status {
         WAITING = 0;
         COMPLETE = 1; 

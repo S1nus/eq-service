@@ -9,9 +9,12 @@ serde_json = "1.0"
 uuid = { version = "0.8", features = ["v4"] }
 celestia-types = {git="https://github.com/eigerco/lumina.git"}
 celestia-rpc = {git="https://github.com/eigerco/lumina.git"}
+nmt-rs = "*"
 tonic = "*"
 prost = "0.13"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
+tendermint-proto = "*"
+tendermint = "*"
 
 [build-dependencies]
 tonic-build = "*"
