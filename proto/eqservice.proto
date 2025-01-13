@@ -1,7 +1,7 @@
 syntax = "proto3";
 package eqs;
 
-service Eq {
+service Inclusion {
     rpc GetKeccakInclusion(GetKeccakInclusionRequest) returns (GetKeccakInclusionResponse);
 }
 message GetKeccakInclusionRequest {

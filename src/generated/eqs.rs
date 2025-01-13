@@ -59,7 +59,7 @@ pub mod get_keccak_inclusion_response {
     }
 }
 /// Generated client implementations.
-pub mod eq_client {
+pub mod inclusion_client {
     #![allow(
         unused_variables,
         dead_code,
@@ -70,10 +70,10 @@ pub mod eq_client {
     use tonic::codegen::*;
     use tonic::codegen::http::Uri;
     #[derive(Debug, Clone)]
-    pub struct EqClient<T> {
+    pub struct InclusionClient<T> {
         inner: tonic::client::Grpc<T>,
     }
-    impl EqClient<tonic::transport::Channel> {
+    impl InclusionClient<tonic::transport::Channel> {
         /// Attempt to create a new client by connecting to a given endpoint.
         pub async fn connect<D>(dst: D) -> Result<Self, tonic::transport::Error>
         where
@@ -84,7 +84,7 @@ pub mod eq_client {
             Ok(Self::new(conn))
         }
     }
-    impl<T> EqClient<T>
+    impl<T> InclusionClient<T>
     where
         T: tonic::client::GrpcService<tonic::body::BoxBody>,
         T::Error: Into<StdError>,
@@ -102,7 +102,7 @@ pub mod eq_client {
         pub fn with_interceptor<F>(
             inner: T,
             interceptor: F,
-        ) -> EqClient<InterceptedService<T, F>>
+        ) -> InclusionClient<InterceptedService<T, F>>
         where
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
@@ -116,7 +116,7 @@ pub mod eq_client {
                 http::Request<tonic::body::BoxBody>,
             >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
         {
-            EqClient::new(InterceptedService::new(inner, interceptor))
+            InclusionClient::new(InterceptedService::new(inner, interceptor))
         }
         /// Compress requests with the given encoding.
         ///
@@ -166,16 +166,17 @@ pub mod eq_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/eqs.Eq/GetKeccakInclusion",
+                "/eqs.Inclusion/GetKeccakInclusion",
             );
             let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("eqs.Eq", "GetKeccakInclusion"));
+            req.extensions_mut()
+                .insert(GrpcMethod::new("eqs.Inclusion", "GetKeccakInclusion"));
             self.inner.unary(req, path, codec).await
         }
     }
 }
 /// Generated server implementations.
-pub mod eq_server {
+pub mod inclusion_server {
     #![allow(
         unused_variables,
         dead_code,
@@ -184,9 +185,9 @@ pub mod eq_server {
         clippy::let_unit_value,
     )]
     use tonic::codegen::*;
-    /// Generated trait containing gRPC methods that should be implemented for use with EqServer.
+    /// Generated trait containing gRPC methods that should be implemented for use with InclusionServer.
     #[async_trait]
-    pub trait Eq: std::marker::Send + std::marker::Sync + 'static {
+    pub trait Inclusion: std::marker::Send + std::marker::Sync + 'static {
         async fn get_keccak_inclusion(
             &self,
             request: tonic::Request<super::GetKeccakInclusionRequest>,
@@ -196,14 +197,14 @@ pub mod eq_server {
         >;
     }
     #[derive(Debug)]
-    pub struct EqServer<T> {
+    pub struct InclusionServer<T> {
         inner: Arc<T>,
         accept_compression_encodings: EnabledCompressionEncodings,
         send_compression_encodings: EnabledCompressionEncodings,
         max_decoding_message_size: Option<usize>,
         max_encoding_message_size: Option<usize>,
     }
-    impl<T> EqServer<T> {
+    impl<T> InclusionServer<T> {
         pub fn new(inner: T) -> Self {
             Self::from_arc(Arc::new(inner))
         }
@@ -254,9 +255,9 @@ pub mod eq_server {
             self
         }
     }
-    impl<T, B> tonic::codegen::Service<http::Request<B>> for EqServer<T>
+    impl<T, B> tonic::codegen::Service<http::Request<B>> for InclusionServer<T>
     where
-        T: Eq,
+        T: Inclusion,
         B: Body + std::marker::Send + 'static,
         B::Error: Into<StdError> + std::marker::Send + 'static,
     {
@@ -271,11 +272,11 @@ pub mod eq_server {
         }
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             match req.uri().path() {
-                "/eqs.Eq/GetKeccakInclusion" => {
+                "/eqs.Inclusion/GetKeccakInclusion" => {
                     #[allow(non_camel_case_types)]
-                    struct GetKeccakInclusionSvc<T: Eq>(pub Arc<T>);
+                    struct GetKeccakInclusionSvc<T: Inclusion>(pub Arc<T>);
                     impl<
-                        T: Eq,
+                        T: Inclusion,
                     > tonic::server::UnaryService<super::GetKeccakInclusionRequest>
                     for GetKeccakInclusionSvc<T> {
                         type Response = super::GetKeccakInclusionResponse;
@@ -289,7 +290,8 @@ pub mod eq_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as Eq>::get_keccak_inclusion(&inner, request).await
+                                <T as Inclusion>::get_keccak_inclusion(&inner, request)
+                                    .await
                             };
                             Box::pin(fut)
                         }
@@ -336,7 +338,7 @@ pub mod eq_server {
             }
         }
     }
-    impl<T> Clone for EqServer<T> {
+    impl<T> Clone for InclusionServer<T> {
         fn clone(&self) -> Self {
             let inner = self.inner.clone();
             Self {
@@ -349,8 +351,8 @@ pub mod eq_server {
         }
     }
     /// Generated gRPC service name
-    pub const SERVICE_NAME: &str = "eqs.Eq";
-    impl<T> tonic::server::NamedService for EqServer<T> {
+    pub const SERVICE_NAME: &str = "eqs.Inclusion";
+    impl<T> tonic::server::NamedService for InclusionServer<T> {
         const NAME: &'static str = SERVICE_NAME;
     }
 }
