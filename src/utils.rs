@@ -7,6 +7,16 @@ use tendermint_proto::{
     v0_37::{types::BlockId as RawBlockId, version::Consensus as RawConsensusVersion},
     Protobuf,
 };
+use celestia_types::nmt::NamespaceProof;
+
+pub struct InclusionProofData {
+    pub nmt_multiproofs: Vec<NamespaceProof>,
+    pub row_root_multiproof: Proof<TmSha2Hasher>,
+}
+
+pub fn create_inclusion_proof_input() -> Result<InclusionProofData> {
+
+}
 
 pub fn create_header_field_tree(header: &celestia_types::ExtendedHeader) -> (MerkleTree<MemDb<[u8; 32]>, TmSha2Hasher>, Proof<TmSha2Hasher>) {
     let hasher = TmSha2Hasher {};
