@@ -1,0 +1,8 @@
+[package]
+name = "eq-common"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+celestia-types = {workspace = true}
+nmt-rs = {workspace = true}

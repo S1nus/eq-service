@@ -10,11 +10,7 @@ use tendermint_proto::{
 };
 use celestia_types::{nmt::{NamespaceProof, NamespacedHashExt}, blob::Blob, ExtendedHeader};
 use std::cmp::max;
-
-pub struct InclusionProofInput {
-    pub nmt_multiproofs: Vec<NamespaceProof>,
-    pub row_root_multiproof: Proof<TmSha2Hasher>,
-}
+use eq_common::InclusionProofInput;
 
 pub fn create_inclusion_proof_input(blob: &Blob, header: &ExtendedHeader, nmt_multiproofs: Vec<NamespaceProof>) -> Result<InclusionProofInput, Status> {
 

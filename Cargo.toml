@@ -1,0 +1,8 @@
+[workspace]
+members = ["service", "program-keccak-inclusion", "common"]
+resolver = "2"
+
+[workspace.dependencies]
+celestia-types = {git="https://github.com/eigerco/lumina.git"}
+celestia-rpc = {git="https://github.com/eigerco/lumina.git"}
+nmt-rs = "*"

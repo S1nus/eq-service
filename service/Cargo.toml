@@ -7,9 +7,9 @@ edition = "2021"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 uuid = { version = "0.8", features = ["v4"] }
-celestia-types = {git="https://github.com/eigerco/lumina.git"}
-celestia-rpc = {git="https://github.com/eigerco/lumina.git"}
-nmt-rs = "*"
+celestia-types = {workspace = true}
+celestia-rpc = {workspace = true}
+nmt-rs = {workspace = true}
 tonic = "*"
 prost = "0.13"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
@@ -18,6 +18,7 @@ tendermint = "*"
 rkyv = "0.8.9"
 sled = "0.34.7"
 clap = {version="4.5.18", features=["derive"]}
+eq-common = {path = "../common"}
 
 [build-dependencies]
 tonic-build = "*"

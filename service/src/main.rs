@@ -23,8 +23,10 @@ use nmt_rs::{
     TmSha2Hasher,
 };
 
+use eq_common::InclusionProofInput;
+
 mod utils;
-use utils::{create_inclusion_proof_input, InclusionProofInput};
+use utils::{create_inclusion_proof_input};
 
 // Using rkyv for serialization
 #[derive(Archive, RkyvDeserialize, RkyvSerialize)]
