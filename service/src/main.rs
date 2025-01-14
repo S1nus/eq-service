@@ -95,13 +95,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Failed creating celestia rpc client");
 
     let addr = "[::1]:50051".parse()?;
-    let eq = InclusionService{
+    let inclusion_service = InclusionService{
         client: Arc::new(client),
         db: db,
     };
 
     Server::builder()
-        .add_service(InclusionServer::new(eq))
+        .add_service(InclusionServer::new(inclusion_service))
         .serve(addr)
         .await?;
 
