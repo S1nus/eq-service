@@ -17,7 +17,7 @@ use tendermint_proto::{
 };
 use std::cmp::max;
 use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize };
-
+use clap::{Parser};
 use nmt_rs::{
     simple_merkle::{db::MemDb, proof::Proof, tree::{MerkleTree, MerkleHash}},
     TmSha2Hasher,
@@ -36,6 +36,7 @@ pub struct Job {
 
 pub struct InclusionService {
     client: Arc<Client>,
+    db: sled::Db,
 }
 
 #[tonic::async_trait]
@@ -73,8 +74,18 @@ impl Inclusion for InclusionService {
     }
 }
 
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    #[arg(short, long)]
+    db_path: String,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    let args = Args::parse();
+    let db = sled::open(args.db_path)?;
 
     let node_token = std::env::var("CELESTIA_NODE_AUTH_TOKEN").expect("Token not provided");
     let client = Client::new("ws://localhost:26658", Some(&node_token))
@@ -84,6 +95,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::1]:50051".parse()?;
     let eq = InclusionService{
         client: Arc::new(client),
+        db: db,
     };
 
     Server::builder()
