@@ -24,7 +24,7 @@ use nmt_rs::{
 };
 use sp1_sdk::{ProverClient, SP1Stdin};
 
-use eq_common::KeccakInclusionToDataRootProof;
+use eq_common::KeccakInclusionToDataRootProofInput;
 
 mod utils;
 use utils::{create_inclusion_proof_input};

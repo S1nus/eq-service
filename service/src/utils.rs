@@ -11,7 +11,7 @@ use tendermint_proto::{
 use celestia_types::{nmt::{NamespaceProof, NamespacedHashExt}, blob::Blob, ExtendedHeader};
 use std::cmp::max;
 use eq_common::KeccakInclusionToDataRootProofInput;
-
+use sha3::{Keccak256, Digest};
 pub fn create_inclusion_proof_input(blob: &Blob, header: &ExtendedHeader, nmt_multiproofs: Vec<NamespaceProof>) -> Result<KeccakInclusionToDataRootProofInput, Status> {
 
     let eds_row_roots = header.dah.row_roots();
@@ -61,12 +61,17 @@ pub fn create_inclusion_proof_input(blob: &Blob, header: &ExtendedHeader, nmt_mu
         )
         .map_err(|_| Status::internal("Failed sanity check on row root inclusion multiproof"))?;
 
+    let mut hasher = Keccak256::new();
+    hasher.update(&blob.data);
+    let hash: [u8; 32] = hasher.finalize().try_into().map_err(|_| Status::internal("Failed to convert keccak hash to array"))?;
+
     Ok(KeccakInclusionToDataRootProofInput {
+        blob: blob.clone(),
+        keccak_hash: hash,
         nmt_multiproofs,
         row_root_multiproof,
-        row_roots: eds_row_roots,
+        row_roots: eds_row_roots.to_vec(),
         data_root: header.header.data_hash.unwrap().as_bytes().try_into().unwrap(),
-        keccak_hash: blob.keccak_hash.unwrap().as_bytes().try_into().unwrap(),
     })
 }
 

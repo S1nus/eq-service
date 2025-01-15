@@ -13,13 +13,14 @@ nmt-rs = {workspace = true}
 tonic = "*"
 prost = "0.13"
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
-tendermint-proto = "*"
-tendermint = "*"
+tendermint-proto = {workspace = true}
+tendermint = {workspace = true}
 rkyv = "0.8.9"
 sled = "0.34.7"
 clap = {version="4.5.18", features=["derive"]}
 eq-common = {path = "../common"}
 sp1-sdk = {workspace=true}
+sha3 = {workspace=true}
 
 [build-dependencies]
 tonic-build = "*"
