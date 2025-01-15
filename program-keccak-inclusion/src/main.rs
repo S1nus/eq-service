@@ -45,7 +45,9 @@ pub fn main() {
     println!("cycle-tracker-start: verifying keccak hash inclusion");
     let mut hasher = Keccak256::new();
     hasher.update(&input.blob.data);
-    let hash: [u8; 32] = hasher.finalize().try_into().expect("Failed to convert keccak hash to array");
+    let hash: [u8; 32] = hasher.finalize()
+        .try_into()
+        .expect("Failed to convert keccak hash to array");
     assert_eq!(hash, input.keccak_hash, "Keccak hash inclusion failed verification");
     println!("cycle-tracker-end: verifying keccak hash inclusion");
 

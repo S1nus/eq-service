@@ -16,27 +16,31 @@ use tendermint_proto::{
     Protobuf,
 };
 use std::cmp::max;
-use rkyv::{Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize };
 use clap::{Parser};
 use nmt_rs::{
     simple_merkle::{db::MemDb, proof::Proof, tree::{MerkleTree, MerkleHash}},
     TmSha2Hasher,
 };
-use sp1_sdk::{ProverClient, SP1Stdin};
+use sp1_sdk::{ProverClient, SP1Proof, SP1ProofWithPublicValues, SP1Stdin};
 
 use eq_common::KeccakInclusionToDataRootProofInput;
-
+use serde::{Serialize, Deserialize};
 mod utils;
 use utils::{create_inclusion_proof_input};
 
-// Using rkyv for serialization
-#[derive(Archive, RkyvDeserialize, RkyvSerialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Job {
     pub height: u64,
     pub namespace: Vec<u8>,
     pub commitment: Vec<u8>,
+    pub status: JobStatus,
 }
 
+#[derive(Serialize, Deserialize)]
+pub enum JobStatus {
+    Pending,
+    Completed(SP1ProofWithPublicValues),
+}
 pub struct InclusionService {
     client: Arc<Client>,
     db: sled::Db,
