@@ -22,8 +22,9 @@ use nmt_rs::{
     simple_merkle::{db::MemDb, proof::Proof, tree::{MerkleTree, MerkleHash}},
     TmSha2Hasher,
 };
+use sp1_sdk::{ProverClient, SP1Stdin};
 
-use eq_common::InclusionProofInput;
+use eq_common::KeccakInclusionToDataRootProof;
 
 mod utils;
 use utils::{create_inclusion_proof_input};

@@ -19,6 +19,7 @@ rkyv = "0.8.9"
 sled = "0.34.7"
 clap = {version="4.5.18", features=["derive"]}
 eq-common = {path = "../common"}
+sp1-sdk = {workspace=true}
 
 [build-dependencies]
 tonic-build = "*"

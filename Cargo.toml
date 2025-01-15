@@ -7,3 +7,5 @@ celestia-types = {git="https://github.com/eigerco/lumina.git"}
 celestia-rpc = {git="https://github.com/eigerco/lumina.git"}
 nmt-rs = "*"
 sp1-zkvm = {version="3.4.0", features=["verify"]}
+sp1-sdk = {version="3.4.0"}
+serde = { version = "1.0.200", default-features = false, features = ["derive"] }

@@ -10,9 +10,9 @@ use tendermint_proto::{
 };
 use celestia_types::{nmt::{NamespaceProof, NamespacedHashExt}, blob::Blob, ExtendedHeader};
 use std::cmp::max;
-use eq_common::InclusionProofInput;
+use eq_common::KeccakInclusionToDataRootProof;
 
-pub fn create_inclusion_proof_input(blob: &Blob, header: &ExtendedHeader, nmt_multiproofs: Vec<NamespaceProof>) -> Result<InclusionProofInput, Status> {
+pub fn create_inclusion_proof_input(blob: &Blob, header: &ExtendedHeader, nmt_multiproofs: Vec<NamespaceProof>) -> Result<KeccakInclusionToDataRootProof, Status> {
 
     let eds_row_roots = header.dah.row_roots();
     let eds_column_roots = header.dah.column_roots();
@@ -61,7 +61,7 @@ pub fn create_inclusion_proof_input(blob: &Blob, header: &ExtendedHeader, nmt_mu
         )
         .map_err(|_| Status::internal("Failed sanity check on row root inclusion multiproof"))?;
 
-    Ok(InclusionProofInput {
+    Ok(KeccakInclusionToDataRootProof {
         nmt_multiproofs,
         row_root_multiproof,
     })
