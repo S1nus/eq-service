@@ -1,0 +1,8 @@
+[package]
+name = "runner-keccak-inclusion"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sp1-sdk = {workspace = true}
+eq-common = {path = "../common"}
