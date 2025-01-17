@@ -11,10 +11,14 @@ pub struct GetKeccakInclusionRequest {
     #[prost(uint64, tag = "3")]
     pub height: u64,
 }
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetKeccakInclusionResponse {
     #[prost(enumeration = "get_keccak_inclusion_response::Status", tag = "1")]
     pub status: i32,
+    #[prost(oneof = "get_keccak_inclusion_response::ResponseValue", tags = "2, 3, 4")]
+    pub response_value: ::core::option::Option<
+        get_keccak_inclusion_response::ResponseValue,
+    >,
 }
 /// Nested message and enum types in `GetKeccakInclusionResponse`.
 pub mod get_keccak_inclusion_response {
@@ -56,6 +60,18 @@ pub mod get_keccak_inclusion_response {
                 _ => None,
             }
         }
+    }
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum ResponseValue {
+        /// Used when status is WAITING
+        #[prost(string, tag = "2")]
+        ProofId(::prost::alloc::string::String),
+        /// Used when status is COMPLETE
+        #[prost(bytes, tag = "3")]
+        Proof(::prost::alloc::vec::Vec<u8>),
+        /// Used when status is FAILED
+        #[prost(string, tag = "4")]
+        ErrorMessage(::prost::alloc::string::String),
     }
 }
 /// Generated client implementations.

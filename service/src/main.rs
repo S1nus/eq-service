@@ -5,7 +5,7 @@ pub mod eqs {
     include!("generated/eqs.rs");
 }
 use eqs::inclusion_server::{Inclusion, InclusionServer};
-use eqs::{GetKeccakInclusionRequest, GetKeccakInclusionResponse};
+use eqs::{GetKeccakInclusionRequest, GetKeccakInclusionResponse, get_keccak_inclusion_response::{ResponseValue, Status as ResponseStatus}};
 
 use celestia_rpc::{BlobClient, Client, HeaderClient};
 use celestia_types::nmt::{Namespace, NamespacedHashExt};
@@ -35,11 +35,13 @@ pub struct Job {
 
 #[derive(Serialize, Deserialize)]
 pub enum JobStatus {
-    Pending,
+    // The Succinct Network job ID
+    Pending(String),
     // For now we'll use the SP1ProofWithPublicValues as the proof
     // Ideally we only want the public values + whatever is needed to verify the proof
     // They don't seem to provide a type for that.
     Completed(SP1ProofWithPublicValues), 
+    Failed(String),
 }
 pub struct InclusionService {
     client: Arc<Client>,
@@ -61,6 +63,31 @@ impl Inclusion for InclusionService {
             namespace: request.namespace.clone(),
             commitment: request.commitment.clone(),
         }).map_err(|e| Status::internal(e.to_string()))?).map_err(|e| Status::internal(e.to_string()))?;
+
+        if let Some(job) = job_from_db {
+            let job: JobStatus = bincode::deserialize(&job)
+                .map_err(|e| Status::internal(e.to_string()))?;
+            match job {
+                JobStatus::Pending(job_id) => {
+                    return Ok(Response::new(GetKeccakInclusionResponse { 
+                        status: ResponseStatus::Waiting as i32, 
+                        response_value: Some(ResponseValue::ProofId(job_id))
+                    }));
+                }
+                JobStatus::Completed(proof) => {
+                    return Ok(Response::new(GetKeccakInclusionResponse { 
+                        status: ResponseStatus::Complete as i32, 
+                        response_value: Some(ResponseValue::Proof(bincode::serialize(&proof).map_err(|e| Status::internal(e.to_string()))?))
+                    }));
+                }
+                JobStatus::Failed(error) => {
+                    return Ok(Response::new(GetKeccakInclusionResponse { 
+                        status: ResponseStatus::Failed as i32, 
+                        response_value: Some(ResponseValue::ErrorMessage(error))
+                    }));
+                }
+            }
+        }
 
         let height = request.height;
         let commitment = Commitment::new(
@@ -87,7 +114,7 @@ impl Inclusion for InclusionService {
         let inclusion_proof_input = create_inclusion_proof_input(&blob, &header, nmt_multiproofs)
             .map_err(|e| Status::internal(e.to_string()))?;
 
-        Ok(Response::new(GetKeccakInclusionResponse { status: 0 }))
+        Ok(Response::new(GetKeccakInclusionResponse { status: 0, response_value: None }))
     }
 }
 
