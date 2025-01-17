@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use tonic::Status;
 use nmt_rs::{
     simple_merkle::{db::MemDb, proof::Proof, tree::{MerkleTree, MerkleHash}},
     TmSha2Hasher,
@@ -13,6 +12,9 @@ use tendermint_proto::{
 use std::cmp::max;
 use sha3::{Keccak256, Digest};
 use celestia_types::{nmt::{NamespaceProof, NamespacedHashExt}, blob::Blob, ExtendedHeader};
+
+mod error;
+use error::InclusionServiceError;
 
 /*
     The types of proofs we expect to support:
@@ -38,7 +40,7 @@ pub struct KeccakInclusionToDataRootProofOutput {
     pub data_root: Vec<u8>,
 }
 
-pub fn create_inclusion_proof_input(blob: &Blob, header: &ExtendedHeader, nmt_multiproofs: Vec<NamespaceProof>) -> Result<KeccakInclusionToDataRootProofInput, Status> {
+pub fn create_inclusion_proof_input(blob: &Blob, header: &ExtendedHeader, nmt_multiproofs: Vec<NamespaceProof>) -> Result<KeccakInclusionToDataRootProofInput, InclusionServiceError> {
     let eds_row_roots = header.dah.row_roots();
     let eds_column_roots = header.dah.column_roots();
 
@@ -46,8 +48,9 @@ pub fn create_inclusion_proof_input(blob: &Blob, header: &ExtendedHeader, nmt_mu
     let eds_size: u64 = eds_row_roots.len().try_into().unwrap();
     let ods_size = eds_size / 2;
 
-    let blob_index = blob.index.ok_or_else(|| Status::internal("Blob index not found"))?;
-    let blob_size: u64 = max(1, blob.to_shares().unwrap().len() as u64);
+    let blob_index = blob.index.ok_or(InclusionServiceError::MissingBlobIndex)?;
+    let blob_size: u64 = max(1, blob.to_shares()
+        .map_err(|e| InclusionServiceError::ShareConversionError(e.to_string()))?.len() as u64);
     let first_row_index: u64 = blob_index.div_ceil(eds_size) - 1;
     let ods_index = blob_index - (first_row_index * ods_size);
 
@@ -84,11 +87,12 @@ pub fn create_inclusion_proof_input(blob: &Blob, header: &ExtendedHeader, nmt_mu
             header.header.data_hash.unwrap().as_bytes().try_into().unwrap(),
             &leaves_hashed[first_row_index as usize..(last_row_index + 1) as usize],
         )
-        .map_err(|_| Status::internal("Failed sanity check on row root inclusion multiproof"))?;
+        .map_err(|_| InclusionServiceError::RowRootVerificationFailed)?;
 
     let mut hasher = Keccak256::new();
     hasher.update(&blob.data);
-    let hash: [u8; 32] = hasher.finalize().try_into().map_err(|_| Status::internal("Failed to convert keccak hash to array"))?;
+    let hash: [u8; 32] = hasher.finalize().try_into()
+        .map_err(|_| InclusionServiceError::KeccakHashConversion)?;
 
     Ok(KeccakInclusionToDataRootProofInput {
         blob: blob.clone(),

@@ -670,6 +670,7 @@ dependencies = [
  "clap",
  "eq-common",
  "hex",
+ "serde_json",
  "tokio",
 ]
 
@@ -1658,13 +1659,14 @@ dependencies = [
  "sha3",
  "tendermint",
  "tendermint-proto",
- "tonic",
+ "thiserror 2.0.11",
 ]
 
 [[package]]
 name = "eq-program-keccak-inclusion"
 version = "0.1.0"
 dependencies = [
+ "bincode",
  "celestia-types",
  "eq-common",
  "nmt-rs",
@@ -5160,6 +5162,16 @@ name = "ruint-macro"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "48fd7bd8a6377e15ad9d42a8ec25371b94ddc67abe7c8b9127bec79bebaaae18"
+
+[[package]]
+name = "runner-keccak-inclusion"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "eq-common",
+ "serde_json",
+ "sp1-sdk",
+]
 
 [[package]]
 name = "rustc-demangle"

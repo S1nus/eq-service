@@ -2,15 +2,16 @@ use celestia_rpc::{BlobClient, Client, HeaderClient};
 use clap::{command, Parser};
 use celestia_types::nmt::Namespace;
 use celestia_types::blob::Commitment;
+use eq_common::{create_inclusion_proof_input};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    #[arg(short, long)]
+    #[arg(long)]
     height: u64,
-    #[arg(short, long)]
+    #[arg(long)]
     namespace: String,
-    #[arg(short, long)]
+    #[arg(long)]
     commitment: String,
 }
 
@@ -33,17 +34,29 @@ async fn main() {
             .try_into()
             .expect("Invalid commitment length")
     );
-    let namespace = Namespace::from_raw(args.namespace.as_bytes())
+
+    let namespace = Namespace::new_v0(&hex::decode(&args.namespace).expect("Invalid namespace hex"))
         .expect("Invalid namespace");
 
+    println!("getting blob...");
     let blob = client.blob_get(args.height, namespace, commitment)
         .await
         .expect("Failed getting blob");
 
+    println!("getting nmt multiproofs...");
     let nmt_multiproofs = client.blob_get_proof(args.height, namespace, commitment)
         .await
         .expect("Failed getting nmt multiproofs");
 
-    let input = create_inclusion_proof_input(&blob, &header, nmt_multiproofs)?;
+    let input = create_inclusion_proof_input(&blob, &header, nmt_multiproofs)
+        .expect("Failed creating inclusion proof input");
+
+    let json = serde_json::to_string_pretty(&input)
+        .expect("Failed serializing proof input to JSON");
+
+    std::fs::write("proof_input.json", json)
+        .expect("Failed writing proof input to file");
+
+    println!("Wrote proof input to proof_input.json");
 
 }

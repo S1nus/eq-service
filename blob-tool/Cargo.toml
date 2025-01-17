@@ -10,3 +10,4 @@ clap = {workspace = true}
 tokio = {workspace = true}
 hex = {workspace = true}
 eq-common = {path = "../common"}
+serde_json = {workspace = true}

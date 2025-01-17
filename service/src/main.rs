@@ -84,7 +84,8 @@ impl Inclusion for InclusionService {
             .await
             .map_err(|e| Status::internal(format!("Failed to get blob proof: {}", e.to_string())))?;
 
-        let inclusion_proof_input = create_inclusion_proof_input(&blob, &header, nmt_multiproofs)?;
+        let inclusion_proof_input = create_inclusion_proof_input(&blob, &header, nmt_multiproofs)
+            .map_err(|e| Status::internal(e.to_string()))?;
 
         Ok(Response::new(GetKeccakInclusionResponse { status: 0 }))
     }
