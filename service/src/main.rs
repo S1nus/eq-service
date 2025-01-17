@@ -23,23 +23,23 @@ use nmt_rs::{
 };
 use sp1_sdk::{ProverClient, SP1Proof, SP1ProofWithPublicValues, SP1Stdin};
 
-use eq_common::KeccakInclusionToDataRootProofInput;
+use eq_common::{KeccakInclusionToDataRootProofInput, create_inclusion_proof_input};
 use serde::{Serialize, Deserialize};
-mod utils;
-use utils::{create_inclusion_proof_input};
 
 #[derive(Serialize, Deserialize)]
 pub struct Job {
     pub height: u64,
     pub namespace: Vec<u8>,
     pub commitment: Vec<u8>,
-    pub status: JobStatus,
 }
 
 #[derive(Serialize, Deserialize)]
 pub enum JobStatus {
     Pending,
-    Completed(SP1ProofWithPublicValues),
+    // For now we'll use the SP1ProofWithPublicValues as the proof
+    // Ideally we only want the public values + whatever is needed to verify the proof
+    // They don't seem to provide a type for that.
+    Completed(SP1ProofWithPublicValues), 
 }
 pub struct InclusionService {
     client: Arc<Client>,
@@ -52,7 +52,16 @@ impl Inclusion for InclusionService {
         &self,
         request: Request<GetKeccakInclusionRequest>,
     ) -> Result<Response<GetKeccakInclusionResponse>, Status> {
+
+
         let request = request.into_inner();
+
+        let job_from_db = self.db.get(&bincode::serialize(&Job {
+            height: request.height,
+            namespace: request.namespace.clone(),
+            commitment: request.commitment.clone(),
+        }).map_err(|e| Status::internal(e.to_string()))?).map_err(|e| Status::internal(e.to_string()))?;
+
         let height = request.height;
         let commitment = Commitment::new(
             request.commitment
