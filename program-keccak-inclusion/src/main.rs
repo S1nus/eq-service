@@ -10,11 +10,8 @@ use sha3::{Digest, Keccak256};
 pub fn main() {
     println!("cycle-tracker-start: deserializing inputs");
     let input: KeccakInclusionToDataRootProofInput = sp1_zkvm::io::read();
-    println!("cycle-tracker-end: deserializing inputs");
-
-    println!("cycle-tracker-start: decoding data root");
     let data_root = TmHash::decode_vec(&input.data_root).unwrap();
-    println!("cycle-tracker-end: decoding data root");
+    println!("cycle-tracker-end: deserializing inputs");
 
     println!("cycle-tracker-start: converting blob to shares");
     let shares = input.blob.to_shares()
