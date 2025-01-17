@@ -26,7 +26,6 @@ pub fn main() {
     for i in 0..input.nmt_multiproofs.len() {
         let proof = &input.nmt_multiproofs[i];
         let end = start + (proof.end_idx() as usize - proof.start_idx() as usize);
-        println!("verifying NMT multiproof {}, with start index {} and end index {}", i, start, end);
         proof
             .verify_range(&input.row_roots[i], &shares[start..end], blob.namespace.into())
             .expect("NMT multiproof into row root failed verification"); // Panicking should prevent an invalid proof from being generated
