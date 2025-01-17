@@ -1,7 +1,7 @@
 #![no_main]
 sp1_zkvm::entrypoint!(main);
 use eq_common::{KeccakInclusionToDataRootProofInput, KeccakInclusionToDataRootProofOutput};
-use celestia_types::{blob::Blob, nmt::{MerkleHash, NamespacedHashExt}};
+use celestia_types::{blob::Blob, nmt::{MerkleHash, NamespacedHashExt}, AppVersion};
 use nmt_rs::TmSha2Hasher;
 use tendermint::Hash as TmHash;
 use tendermint_proto::Protobuf;
@@ -11,10 +11,13 @@ pub fn main() {
     println!("cycle-tracker-start: deserializing inputs");
     let input: KeccakInclusionToDataRootProofInput = sp1_zkvm::io::read();
     let data_root = TmHash::decode_vec(&input.data_root).unwrap();
+    let mut blob: Blob = Blob::new(input.blob_namespace, input.blob_data, AppVersion::V3)
+        .expect("Failed to create blob");
+    blob.index = Some(input.blob_index);
     println!("cycle-tracker-end: deserializing inputs");
 
     println!("cycle-tracker-start: converting blob to shares");
-    let shares = input.blob.to_shares()
+    let shares = blob.to_shares()
         .expect("Failed to convert blob to shares");
     println!("cycle-tracker-end: converting blob to shares");
 
@@ -23,8 +26,9 @@ pub fn main() {
     for i in 0..input.nmt_multiproofs.len() {
         let proof = &input.nmt_multiproofs[i];
         let end = start + (proof.end_idx() as usize - proof.start_idx() as usize);
+        println!("verifying NMT multiproof {}, with start index {} and end index {}", i, start, end);
         proof
-            .verify_range(&input.row_roots[i], &shares[start..end], input.blob.namespace.into())
+            .verify_range(&input.row_roots[i], &shares[start..end], blob.namespace.into())
             .expect("NMT multiproof into row root failed verification"); // Panicking should prevent an invalid proof from being generated
         start = end;
     }
@@ -44,7 +48,7 @@ pub fn main() {
 
     println!("cycle-tracker-start: verifying keccak hash inclusion");
     let mut hasher = Keccak256::new();
-    hasher.update(&input.blob.data);
+    hasher.update(&blob.data);
     let hash: [u8; 32] = hasher.finalize()
         .try_into()
         .expect("Failed to convert keccak hash to array");
