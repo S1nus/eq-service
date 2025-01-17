@@ -5168,6 +5168,7 @@ name = "runner-keccak-inclusion"
 version = "0.1.0"
 dependencies = [
  "bincode",
+ "celestia-types",
  "eq-common",
  "serde_json",
  "sp1-sdk",

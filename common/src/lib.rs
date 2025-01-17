@@ -11,7 +11,7 @@ use tendermint_proto::{
 };
 use std::cmp::max;
 use sha3::{Keccak256, Digest};
-use celestia_types::{nmt::{NamespaceProof, NamespacedHashExt}, blob::Blob, ExtendedHeader};
+use celestia_types::{nmt::{NamespaceProof, NamespacedHashExt, Namespace}, blob::Blob, ExtendedHeader};
 
 mod error;
 use error::InclusionServiceError;
@@ -26,7 +26,9 @@ use error::InclusionServiceError;
 
 #[derive(Serialize, Deserialize)]
 pub struct KeccakInclusionToDataRootProofInput {
-    pub blob: Blob,
+    pub blob_data: Vec<u8>,
+    pub blob_index: u64,
+    pub blob_namespace: Namespace,
     pub nmt_multiproofs: Vec<NamespaceProof>,
     pub row_root_multiproof: Proof<TmSha2Hasher>,
     pub row_roots: Vec<NamespacedHash<29>>,
@@ -95,12 +97,14 @@ pub fn create_inclusion_proof_input(blob: &Blob, header: &ExtendedHeader, nmt_mu
         .map_err(|_| InclusionServiceError::KeccakHashConversion)?;
 
     Ok(KeccakInclusionToDataRootProofInput {
-        blob: blob.clone(),
+        blob_data: blob.data.clone(),
+        blob_index: blob.index.unwrap(),
+        blob_namespace: blob.namespace,
         keccak_hash: hash,
         nmt_multiproofs,
         row_root_multiproof,
-        row_roots: eds_row_roots.to_vec(),
-        data_root: header.header.data_hash.unwrap().as_bytes().try_into().unwrap(),
+        row_roots: eds_row_roots[first_row_index as usize..=last_row_index as usize].to_vec(),
+        data_root: header.header.data_hash.unwrap().encode_vec()
     })
 }
 
