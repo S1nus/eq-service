@@ -121,7 +121,12 @@ impl Inclusion for InclusionService {
 
         let mut stdin = SP1Stdin::new();
         stdin.write(&inclusion_proof_input);
-        let request_id = network_prover.prove(&pk, &stdin).groth16().request_async().await.unwrap();
+        let request_id = network_prover
+            .prove(&pk, &stdin)
+            .groth16()
+            .request_async()
+            .await
+            .unwrap(); // TODO: Handle this error
         
         // TODO: Write a pending job to the DB, and start a worker to wait for the proof and update DB when it's complete
         // do so in a way so the service can recover from crashes, remember which jobs it's already started, and update DB when they're finished
