@@ -1,11 +1,4 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Protobuff generation
-    tonic_build::configure()
-        .build_server(true)
-        .build_client(true)
-        .out_dir("src/generated")
-        .compile_protos(&["proto/eqservice.proto"], &["proto/"])?;
-
     // SP1 ELF/Program build
     let sp1_program_crate_path = "../program-keccak-inclusion";
     let sp1_elf_path = "../target/release/eq-program-keccak-inclusion";
