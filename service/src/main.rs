@@ -21,10 +21,12 @@ use nmt_rs::{
     simple_merkle::{db::MemDb, proof::Proof, tree::{MerkleTree, MerkleHash}},
     TmSha2Hasher,
 };
-use sp1_sdk::{ProverClient, SP1Proof, SP1ProofWithPublicValues, SP1Stdin};
+use sp1_sdk::{ProverClient, SP1Proof, SP1ProofWithPublicValues, SP1Stdin, Prover, NetworkProver};
 
 use eq_common::{KeccakInclusionToDataRootProofInput, create_inclusion_proof_input};
 use serde::{Serialize, Deserialize};
+
+const KECCAK_INCLUSION_ELF: &[u8] = include_bytes!("../../target/elf-compilation/riscv32im-succinct-zkvm-elf/release/eq-program-keccak-inclusion");
 
 #[derive(Serialize, Deserialize)]
 pub struct Job {
@@ -86,7 +88,7 @@ impl Inclusion for InclusionService {
                         response_value: Some(ResponseValue::ErrorMessage(error))
                     }));
                 }
-            }
+            };
         }
 
         let height = request.height;
@@ -114,6 +116,16 @@ impl Inclusion for InclusionService {
         let inclusion_proof_input = create_inclusion_proof_input(&blob, &header, nmt_multiproofs)
             .map_err(|e| Status::internal(e.to_string()))?;
 
+        let network_prover = ProverClient::builder().network().build();
+        let (pk, vk) = network_prover.setup(KECCAK_INCLUSION_ELF);
+
+        let mut stdin = SP1Stdin::new();
+        stdin.write(&inclusion_proof_input);
+        let request_id = network_prover.prove(&pk, &stdin).groth16().request_async().await.unwrap();
+        
+        // TODO: Write a pending job to the DB, and start a worker to wait for the proof and update DB when it's complete
+        // do so in a way so the service can recover from crashes, remember which jobs it's already started, and update DB when they're finished
+        
         Ok(Response::new(GetKeccakInclusionResponse { status: 0, response_value: None }))
     }
 }
