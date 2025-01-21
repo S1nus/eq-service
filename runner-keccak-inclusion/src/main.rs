@@ -3,7 +3,7 @@ use std::fs;
 use eq_common::KeccakInclusionToDataRootProofInput;
 use celestia_types::nmt::NamespaceProof;
 
-const KECCAK_INCLUSION_ELF: &[u8] = include_bytes!("../../target/elf-compilation/riscv32im-succinct-zkvm-elf/release/eq-program-keccak-inclusion");
+const KECCAK_INCLUSION_ELF: &[u8] = include_bytes!("../../target/release/eq-program-keccak-inclusion");
 
 
 fn main() {

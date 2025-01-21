@@ -26,7 +26,7 @@ use sp1_sdk::{ProverClient, SP1Proof, SP1ProofWithPublicValues, SP1Stdin, Prover
 use eq_common::{KeccakInclusionToDataRootProofInput, create_inclusion_proof_input};
 use serde::{Serialize, Deserialize};
 
-const KECCAK_INCLUSION_ELF: &[u8] = include_bytes!("../../target/elf-compilation/riscv32im-succinct-zkvm-elf/release/eq-program-keccak-inclusion");
+const KECCAK_INCLUSION_ELF: &[u8] = include_bytes!("../../target/release/eq-program-keccak-inclusion");
 
 #[derive(Serialize, Deserialize)]
 pub struct Job {
